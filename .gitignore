@@ -1,0 +1,8 @@
+setenv.ps1
+terraform.*
+.terraform*
+netshoot-deploy.bat
+*.pem
+*.pub
+setenv.sh
+__pycache__
