@@ -17,13 +17,14 @@ class Pyavx:
       print('GET/POST must have data.')
       return None
 
-    if not self.cid and data['action'] != 'login':
+    if not self.cid and data['action'] not in ['login', 'get_api_token']:
       print('CID needed for this to work.')
+      return None
 
     data['CID'] = self.cid
    
     url = f'https://{self.ip}/{version}/api'
-    self.r = requests.post(url, data=data, verify=False)
+    self.r = requests.post(url, headers=self.headers, data=data, verify=False)
     return self.r.json()
 
   def __init__(self):
@@ -43,9 +44,27 @@ class Pyavx:
     self.ip = os.getenv('AVIATRIX_CONTROLLER_IP')
     u = os.getenv('AVIATRIX_USERNAME')
     p = os.getenv('AVIATRIX_PASSWORD')
-    #t = os.getenv('AVIATRIX_TOKEN')
 
     self.cid = None
+    self.headers = None
+
+    #Get API token.
+    data = {
+      'action': 'get_api_token'
+    }
+    r = self.api_call(data, version='v2')
+
+    if r['return'] and type(r['results'] == dict):
+      self.headers = {'X-Access-Key': r['results']['api_token']}
+    else:
+      print(f'Error getting api_token. {r["reason"]}')
+      exit()
+
+    if self.headers:
+      print('API token received.')
+    else:
+      print('Error getting API token.')
+      exit()
 
     # Get the CID
     data = {
@@ -60,8 +79,10 @@ class Pyavx:
       self.cid = r.get('CID')
     else:
       print(f'Error getting CID. {r["reason"]}')
+      exit()
 
     if self.cid:
       print("CID received.")
     else:
       print(f"Error with CID.")
+      exit()

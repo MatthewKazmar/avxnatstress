@@ -7,6 +7,8 @@ import argparse, json
 from ipaddress import IPv4Address, IPv4Network
 
 DEFAULT_SNAT_IP = '192.168.31.4'
+DEFAULT_SNAT_HAIP = '192.168.31.5'
+DEFAULT_DNAT_IP = '192.168.31.2'
 DEFAULT_DNAT_POOL = '172.31.0.0/16'
 DEFAULT_DPORT_START = 5000
 
@@ -94,11 +96,14 @@ flags.add_argument('--count', '-c', dest='count', action='store', required=True,
 flags.add_argument('--gwname', '-g', dest='gw', action='store', required=True, help='Gateway name')
 flags.add_argument('--srcint', '-i', dest='srcint', action='store', required=True, help='Gateway source interface')
 flags.add_argument('--dstint', '-o', dest='dstint', action='store', required=True, help='Gateway destination interface')
+flags.add_argument('--dnatip', '-z', dest='dnat_ip', action='store', required=False, help='Destination NAT IP.', default=DEFAULT_DNAT_IP)
 flags.add_argument('--snatip', '-s', dest='snat_ip', action='store', required=False, help='Source NAT IP.', default=DEFAULT_SNAT_IP)
+flags.add_argument('--snathaip', '-t', dest='snat_haip', action='store', required=False, help='Source HA NAT IP.', default=DEFAULT_SNAT_HAIP)
 
 flags.add_argument('--dnatpool', '-d', dest='dnat_pool', action='store', required=False, help='DNAT POOL', default=DEFAULT_DNAT_POOL)
 flags.add_argument('--dnatportstart', '-p', dest='dnat_port', action='store', required=False, help='Starting DNAT port.', default=DEFAULT_DPORT_START, type=int)
 args = flags.parse_args()
+hagw = f'{args.gw}-hagw'
 
 pyavx = pyavx.Pyavx()
 
@@ -107,4 +112,6 @@ if not pyavx:
   exit()
 
 enable_snat(args.gw, args.snat_ip, args.dnat_pool, args.dstint)
-enable_dnat(args.gw, args.count, args.dnat_pool, args.dnat_port, args.snat_ip, args.srcint)
+enable_snat(hagw, args.snat_haip, args.dnat_pool, args.dstint)
+enable_dnat(args.gw, args.count, args.dnat_pool, args.dnat_port, args.dnat_ip, args.srcint)
+enable_dnat(hagw, args.count, args.dnat_pool, args.dnat_port, args.dnat_ip, args.srcint)
